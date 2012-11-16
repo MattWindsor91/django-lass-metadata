@@ -1,0 +1,11 @@
+.*.sw*
+*.pyc
+xapian_index
+python.core
+locale
+templates
+private/
+lass.egg-info/
+src/
+_build/
+\#*\#
