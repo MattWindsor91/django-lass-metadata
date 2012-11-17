@@ -7,12 +7,12 @@ import os
 import sys
 
 
-name = 'django-reusable-app'
-package = 'myproject'
-description = ''
-url = 'http://github.com/.../.../'
-author = ''
-author_email = ''
+name = 'django-lass-metadata'
+package = 'metadata'
+description = 'Metadata system for LASS'
+url = 'http://github.com/UniversityRadioYork/django-lass-metadata/'
+author = 'URY Computing Team'
+author_email = 'computing@ury.org.uk'
 license = 'BSD'
 install_requires = []
 

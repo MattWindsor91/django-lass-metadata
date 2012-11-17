@@ -110,3 +110,6 @@ admin_base
     :undoc-members:
     :show-inheritance:
 """
+
+
+__version__ = '0.0.1'

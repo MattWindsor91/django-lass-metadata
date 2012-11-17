@@ -5,7 +5,9 @@ python.core
 locale
 templates
 private/
-lass.egg-info/
+*.egg-info/
 src/
 _build/
+build/
+dist/
 \#*\#
