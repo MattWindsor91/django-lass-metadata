@@ -18,4 +18,9 @@ class MetadataKeyAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'allow_multiple')
 
 
-admin.site.register(MetadataKey, MetadataKeyAdmin)
+def register(site):
+    """
+    Registers the metadata admin hooks with an admin site.
+
+    """
+    site.register(MetadataKey, MetadataKeyAdmin)
