@@ -142,7 +142,8 @@ class MetadataSubjectMixin(object):
 
     """
 
-    # Don't forget to override this!
+    ## MANDATORY OVERRIDES ##
+
     def metadata_strands(self):
         """
         Returns a dictionary of related sets that provide the
@@ -158,47 +159,7 @@ class MetadataSubjectMixin(object):
         raise NotImplementedError(
             'Must implement metadata_strands.')
 
-    # Also override this, if relevant
-    def metadata_parent(self):
-        """Returns an object that metadata should be inherited from
-        if not assigned for this object.
-
-        This can return None if no inheriting should be done.
-
-        """
-        return None
-
-    ## MAGIC METHODS ##
-
-    def __getattr__(self, name):
-        """
-        Attribute retrieval hook that intercepts calls for *metadata*
-        and reroutes them to *metadata_at*, as well as attempting to
-        route calls for items to the first matching metadatum in
-        the current strands.
-
-        """
-        result = None
-        result_def = False
-
-        # Delay evaluation of now until we know it's safe to
-        # do so
-        now = lambda: (timezone.now()
-                       if not hasattr(self, 'range_start')
-                       else self.range_start())
-        if name == 'metadata':
-            result = self.metadata_at(now())
-            result_def = True
-        elif name != 'range_start' and not name.startswith('_'):
-            for strand in self.metadata_strands():
-                md = self.metadata_at(now())[strand]
-                if name in md:
-                    result = md[name]
-                    result_def = True
-                    break
-        if not result_def:
-            raise AttributeError
-        return result
+    ## OPTIONAL OVERRIDES ##
 
     def default_inherit_function(self, date, strand, key, peek=False):
         """
@@ -227,6 +188,50 @@ class MetadataSubjectMixin(object):
                 .format(date, self, strand, key)
             )
         return value
+
+    def metadata_parent(self):
+        """
+        Returns an object that metadata should be inherited from
+        if not assigned for this object.
+
+        This can return None if no inheriting should be done.
+
+        """
+        return None
+
+    ## MAGIC METHODS ##
+
+    def __getattr__(self, name):
+        """
+        Attribute retrieval hook that intercepts calls for *metadata*
+        and reroutes them to *metadata_at*, as well as attempting to
+        route calls for items to the first matching metadatum in
+        the current strands.
+
+        """
+        result = None
+        result_def = False
+
+        if name != 'range_start':
+            now = (timezone.now()
+                   if not hasattr(self, 'range_start')
+                   else self.range_start())
+            if name == 'metadata':
+                result = self.metadata_at(now)
+                result_def = True
+            elif not name.startswith('_'):
+                for strand in self.metadata_strands():
+                    md = self.metadata_at(now)[strand]
+                    if name in md:
+                        result = md[name]
+                        result_def = True
+                        break
+
+        if not result_def:
+            raise AttributeError
+        return result
+
+    ## OTHER FUNCTIONS ##
 
     def metadata_at(self, date, inherit_function=None):
         """
