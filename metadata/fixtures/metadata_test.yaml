@@ -1,0 +1,36 @@
+- model: metadata.MetadataKey
+  pk: 1
+  fields:
+    name: single
+    description: Single-entry metadata test.
+    allow_multiple: False
+- model: metadata.MetadataKey
+  pk: 2
+  fields:
+    name: multiple
+    description: Multiple-entry metadata test.
+    allow_multiple: True 
+- model: metadata.MetadataSubjectTest
+  pk: 1
+  fields:
+    test: test
+- model: metadata.MetadataSubjectTestTextMetadata
+  pk: 1
+  fields:
+    key: 1
+    element: 1
+    value: moof!
+    effective_from: "2007-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2
+- model: metadata.TestImageMetadata
+  pk: 1
+  fields:
+    key: 1
+    element: 1
+    value: nothere.png
+    effective_from: "2007-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2

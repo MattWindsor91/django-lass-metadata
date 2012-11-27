@@ -14,7 +14,7 @@ from django.db import models
 from metadata.models.generic import GenericMetadata
 
 
-class Metadata(GenericMetadata):
+class TextMetadata(GenericMetadata):
     """Abstract base for items of textual metadata."""
 
     class Meta(GenericMetadata.Meta):

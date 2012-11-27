@@ -23,10 +23,10 @@ GenericMetadata
     :undoc-members:
     :show-inheritance:
 
-Metadata
---------
+TextMetadata
+------------
 
-.. automodule:: metadata.models.data
+.. automodule:: metadata.models.text
     :deprecated:
     :members:
     :undoc-members:
@@ -59,6 +59,6 @@ Type
 # models further up the list
 from metadata.models.type import Type
 from metadata.models.key import MetadataKey
-from metadata.models.data import Metadata
 from metadata.models.generic import GenericMetadata
+from metadata.models.text import TextMetadata
 from metadata.models.image import ImageMetadata

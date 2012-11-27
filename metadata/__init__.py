@@ -1,26 +1,19 @@
 """
-=========================================================
-`metadata` - the LASS metadata and common patterns system
-=========================================================
+=====================================
+`metadata` - the LASS metadata system
+=====================================
 
-The `metadata` app contains code designed to cover generic patterns
-in the LASS system.
-
-One of these, and the namesake of the app, is the generic metadata
-system, which allows objects in the LASS model set to contain
-key-value stores of textual, image-based and other formats of
-metadata by inheriting a mixin and providing a subclass of the
-standard metadata models.
-
-The `metadata` app also includes several models, mixins and utility
-functions covering other commonly used patterns.
+The `metadata` app contains the generic metadata system used in LASS,
+which allows objects in the LASS model set to contain key-value stores
+of textual, image-based and other formats of metadata by inheriting a
+mixin and providing a subclass of the standard metadata models.
 
 Metadata system
 ===============
 
-Most of the `metadata` app is dedicated to the URY *metadata system*,
-which allows various different *strands* of data (generally text,
-but also image-based and other formats) to be attached to items.
+The `metadata` app is dedicated to the LASS *metadata system*, which
+allows various different *strands* of data (generally text, but also
+image-based and other formats) to be attached to items.
 
 LASS uses the metadata system, for example, to provide shows with
 names and descriptions that have full recorded history and hooks for
@@ -30,17 +23,17 @@ and player insets) with podcasts.
 Strands
 -------
 
-Each model can have zero or more `strands` of metadata attached to
-it.  Each strand is its own model (see below for more information on
-how to create a metadata provider model), and represents a specific
+Each model can have zero or more `strands` of metadata attached to it.
+Each strand is its own model (see below for more information on how to
+create a metadata provider model), and represents a specific
 collection of metadata on objects in the subject model.
 
 Strands are indexed by name; an entire strand (as a dictionary-like
-object) can be retrieved from an implementor of
-`MetadataSubjectMixin` with ``object.metadata('strand-name')``.
-Generally, there will be a ``text`` strand containing all textual
-metadata, and an ``images`` strand containing thumbnail images and
-other related pictorial metadata.
+object) can be retrieved from an implementor of `MetadataSubjectMixin`
+with ``object.metadata()['strand-name']``.  Generally, there will be a
+``text`` strand containing all textual metadata, and an ``images``
+strand containing thumbnail images and other related pictorial
+metadata.
 
 Implementation
 --------------
@@ -58,8 +51,8 @@ strand types.
 Examples
 --------
 
-In the LASS project, examples of how to use the metadata system can
-be found in `schedule.models.show`, `uryplayer.models.podcast` and
+In the LASS project, examples of how to use the metadata system can be
+found in `schedule.models.show`, `uryplayer.models.podcast` and
 `people.models.role`.
 
 Models

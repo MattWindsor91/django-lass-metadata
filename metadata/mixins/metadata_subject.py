@@ -3,7 +3,6 @@ accessed in a common manner is described.
 
 """
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from metadata.models.key import MetadataKey
 
@@ -20,31 +19,78 @@ class MetadataView(object):
         as a dictionary.
 
         """
-        def __init__(self, subject, date, strand):
-            """Initialises the strand view.
+        def __init__(self, subject, date, strand, inherit_function):
+            """
+            Initialises the strand view.
 
             Keyword arguments:
             subject - see MetadataView.__init__
             date - see MetadataView.__init__
             strand - the strand of metadata (for example 'text',
                 'images' etc) that this view is operating on
+            inherit_function - the function, given a date, strand and
+                key, to call if a piece of metadata is missing
 
             """
             self.subject = subject
-            self.strand = strand
             self.date = date
+            self.strand = strand
+            self.strand_data = self.subject.metadata_strands()[strand]
+            self.inherit_function = inherit_function
 
-        def __getitem__(self, key):
-            """Attempts to get a metadatum in the current
+        def __contains__(self, key):
+            """
+            Checks to see if the given metadata key is in this
             strand.
 
             """
-            return self.subject.metadatum_at_date(
-                date=self.date,
-                key=key,
-                strand=self.strand)
+            key_id = MetadataKey.get(key).id
 
-    def __init__(self, subject, date):
+            result = self.strand_data.filter(
+                key__pk=key_id,
+                effective_from__lte=self.date
+            ).exists()
+
+            if result is False:
+                result = self.inherit_function(
+                    self.date,
+                    self.strand,
+                    key,
+                    peek=True
+                )
+            return result
+
+        def __getitem__(self, key):
+            """
+            Attempts to get a metadatum in the current
+            strand.
+
+            """
+            # First let's see if the key actually exists.
+            try:
+                key_id = MetadataKey.get(key).id
+            except MetadataKey.DoesNotExist:
+                raise KeyError(
+                    'No such metadata key {0}.'.format(key)
+                )
+            # Now try to get the actual metadata
+            try:
+                result = self.strand_data.filter(
+                    key__pk=key_id,
+                    effective_from__lte=self.date
+                ).order_by(
+                    '-effective_from'
+                ).latest().value
+            except self.subject.__class__.DoesNotExist:
+                # Try inheritance
+                result = self.inherit_function(
+                    self.date,
+                    self.strand,
+                    key
+                )
+            return result
+
+    def __init__(self, subject, date, inherit_function):
         """Initialises the metadata view.
 
         Keyword arguments:
@@ -52,19 +98,43 @@ class MetadataView(object):
             dictionary
         date - the date representing the period of time used to
             decide what constitutes "active" metadata
+        inherit_function - the function, given a date, strand and
+            key, to call if a piece of metadata is missing
 
         """
         self.subject = subject
         self.date = date
+        self.inherit_function = inherit_function
+
+    def __call__(self, date=None):
+        """
+        Backwards compatibility for any code that calls metadata(),
+        or metadata(date).
+
+        New code should use metadata as a field, or call
+        metadata_at(date).
+
+        """
+        return self if not date else self.__class__(
+            self.subject,
+            date,
+            self.inherit_function
+        )
+
+    def __contains__(self, strand):
+        """Checks to see if a named strand is present."""
+        return (strand in self.subject.metadata_strands())
 
     def __getitem__(self, strand):
         """Attempts to get a view for a metadata strand."""
-        if strand not in self.subject.metadata_strands():
+        if not self.__contains__(strand):
             raise KeyError('No such metadata strand here.')
         return MetadataView.StrandView(
             self.subject,
             self.date,
-            strand)
+            strand,
+            self.inherit_function
+        )
 
 
 class MetadataSubjectMixin(object):
@@ -74,7 +144,8 @@ class MetadataSubjectMixin(object):
 
     # Don't forget to override this!
     def metadata_strands(self):
-        """Returns a dictionary of related sets that provide the
+        """
+        Returns a dictionary of related sets that provide the
         metadata strands.
 
         These should usually be organised along type lines, for
@@ -97,89 +168,85 @@ class MetadataSubjectMixin(object):
         """
         return None
 
-    ## COMMON METADATA KEYS ##
+    ## MAGIC METHODS ##
 
-    def title(self):
-        """Provides the current title of the item.
-
-        The title is extracted from the item metadata.
+    def __getattr__(self, name):
+        """
+        Attribute retrieval hook that intercepts calls for *metadata*
+        and reroutes them to *metadata_at*, as well as attempting to
+        route calls for items to the first matching metadatum in
+        the current strands.
 
         """
-        return self.current_metadatum('title')
+        result = None
+        result_def = False
 
-    def title_image(self):
-        """Provides the path (within the image directory) of an
-        image that can be used in place of this item's 'title'
-        metadatum in headings, if such an image exists.
+        # Delay evaluation of now until we know it's safe to
+        # do so
+        now = lambda: (timezone.now()
+                       if not hasattr(self, 'range_start')
+                       else self.range_start())
+        if name == 'metadata':
+            result = self.metadata_at(now())
+            result_def = True
+        elif name != 'range_start' and not name.startswith('_'):
+            for strand in self.metadata_strands():
+                md = self.metadata_at(now())[strand]
+                if name in md:
+                    result = md[name]
+                    result_def = True
+                    break
+        if not result_def:
+            raise AttributeError
+        return result
 
-        This is extracted from the item metadata.
+    def default_inherit_function(self, date, strand, key, peek=False):
+        """
+        Default inheritance function, which tries to access the
+        metadata on this subject's metadata parent, and throws a
+        :class:`KeyError` if no parent exists.
+
+        If *peek* is True, the function should instead return True if
+        the metadata key exists, and False if otherwise.
+
+        This can be overridden.
 
         """
-        return self.current_metadatum('title_image')
+        value = None
+        value_found = False
 
-    def description(self):
-        """Provides the current description of the item.
+        if hasattr(self, 'metadata_parent'):
+            if self.metadata_parent():
+                met = self.metadata_parent().metadata_at(date)[strand]
+                value = (key in met) if peek else met[key]
+                value_found = True
 
-        The description is extracted from the item metadata.
+        if not value_found:
+            raise KeyError(
+                'No metadata at {0} in strand {1}:{2} called {3}.'
+                .format(date, self, strand, key)
+            )
+        return value
 
+    def metadata_at(self, date, inherit_function=None):
         """
-        return self.current_metadatum('description')
-
-    def metadata(self, date=None):
-        """Returns a dictionary-style view of the metadata that
-        can be used to access it in templates.
+        Returns a dict-like object that allows the strands of
+        metadata active on this item at the given time.
 
         The result is two-tiered and organised first by metadata
         strand and then by key.
 
-        """
-        return MetadataView(self, date if date else timezone.now())
-
-    def metadatum_at_date(self,
-                          date,
-                          key,
-                          strand='text',
-                          inherit=True):
-        """Returns the value of the given metadata key that was
-        in effect at the given date.
-
-        The value returned is the most recently effected value
-        that is approved and not made effective after the given
-        date.
-
-        If no such item exists, and inherit is True, the metadatum
-        request will propagate up to the parent if it exists.
+        If ``inherit_function`` is specified, it will be supplied
+        a date, strand and key in the event that a key is accessed
+        that does not appear in the metadata strand for this subject
+        on that date, and should return either a metadatum inherited
+        by this subject in its place or raise :class:`KeyError`.
 
         """
-        key_id = MetadataKey.get(key).id
-        try:
-            result = self.metadata_strands()[strand].filter(
-                key__pk=key_id,
-                effective_from__lte=date).order_by(
-                    '-effective_from').latest().value
-        except ObjectDoesNotExist:
-            if inherit is True and self.metadata_parent() is not None:
-                result = self.metadata_parent().metadatum_at_date(
-                    date,
-                    key,
-                    strand,
-                    inherit)
-            else:
-                result = None
-        return result
-
-    def current_metadatum(self, key, strand='text', inherit=True):
-        """Retrieves the current value of the given metadata key.
-
-        The current value is the most recently effected value that
-        is approved and not in the future.
-
-        If no such item exists, and inherit is True, the metadatum
-        request will propagate up to the parent if it exists.
-
-        """
-        return self.metadatum_at_date(
-            timezone.now(),
-            key,
-            strand,
-            inherit)
+        return MetadataView(
+            self,
+            date,
+            (self.default_inherit_function
+             if not inherit_function
+             else inherit_function)
+        )

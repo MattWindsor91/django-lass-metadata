@@ -1,3 +1,5 @@
+USE_TZ = True
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -6,5 +8,6 @@ DATABASES = {
 }
 
 INSTALLED_APPS = (
+    'people',
     'metadata',
 )
