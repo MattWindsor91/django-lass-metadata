@@ -1,3 +1,4 @@
 Django>=1.4
+PIL>=1.1.7
 -e git://github.com/UniversityRadioYork/django-lass-utils.git#egg=django-lass-utils
 -e git://github.com/UniversityRadioYork/django-lass-people.git#egg=django-lass-people
