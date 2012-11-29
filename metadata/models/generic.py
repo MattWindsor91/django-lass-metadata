@@ -4,7 +4,7 @@ from django.db import models
 from metadata.models import MetadataKey
 from people.mixins import CreatableMixin
 from people.mixins import ApprovableMixin
-from metadata.mixins import EffectiveRangeMixin
+from lass_utils.mixins import EffectiveRangeMixin
 
 
 class GenericMetadata(ApprovableMixin,

@@ -8,14 +8,16 @@ from metadata.models.key import MetadataKey
 
 
 class MetadataView(object):
-    """A dictionary view abstraction over the metadata system,
+    """
+    A dictionary view abstraction over the metadata system,
     treating each strand of metadata in a metadata subject as a
     separate key in a dictionary.
 
     """
 
     class StrandView(object):
-        """An intermediary class that represents a strand of metadata
+        """
+        An intermediary class that represents a strand of metadata
         as a dictionary.
 
         """
@@ -36,7 +38,14 @@ class MetadataView(object):
             self.date = date
             self.strand = strand
             self.strand_data = self.subject.metadata_strands()[strand]
-            self.inherit_function = inherit_function
+
+            # Partially apply our inherit function to the stuff
+            # that is "locked into" the strand view for convenience.
+            self.inherit = lambda key: inherit_function(
+                self.date,
+                self.strand,
+                key
+            )
 
         def __contains__(self, key):
             """
@@ -68,26 +77,33 @@ class MetadataView(object):
             """
             # First let's see if the key actually exists.
             try:
-                key_id = MetadataKey.get(key).id
+                key_obj = MetadataKey.get(key)
             except MetadataKey.DoesNotExist:
                 raise KeyError(
                     'No such metadata key {0}.'.format(key)
                 )
-            # Now try to get the actual metadata
-            try:
-                result = self.strand_data.filter(
-                    key__pk=key_id,
-                    effective_from__lte=self.date
-                ).order_by(
-                    '-effective_from'
-                ).latest().value
-            except self.subject.__class__.DoesNotExist:
-                # Try inheritance
-                result = self.inherit_function(
-                    self.date,
-                    self.strand,
-                    key
-                )
+            # Now try to get the actual metadata that is active
+            # at our reference date.
+            active = self.strand_data.filter(
+                key__pk=key_obj.id,
+                effective_from__lte=self.date
+            ).exclude(
+                effective_to__lte=self.date
+            ).order_by(
+                '-effective_from'
+            )
+
+            if key_obj.allow_multiple:
+                # Pull in inherited metadata too, if any
+                result = [x.value for x in active]
+                result.extend(self.inherit(key))
+            else:
+                # Only use inherited metadata if we don't have an
+                # active value of our own.
+                try:
+                    result = active.latest().value
+                except self.strand_data.model.DoesNotExist:
+                    result = self.inherit(key)
             return result
 
     def __init__(self, subject, date, inherit_function):
@@ -183,10 +199,15 @@ class MetadataSubjectMixin(object):
                 value_found = True
 
         if not value_found:
-            raise KeyError(
-                'No metadata at {0} in strand {1}:{2} called {3}.'
-                .format(date, self, strand, key)
-            )
+            if peek:
+                value = False
+            elif MetadataKey.get(key).allow_multiple:
+                value = []
+            else:
+                raise KeyError(
+                    'No metadata at {0} in strand {1}:{2} called {3}.'
+                    .format(date, self, strand, key)
+                )
         return value
 
     def metadata_parent(self):
