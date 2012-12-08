@@ -41,10 +41,11 @@ class MetadataView(object):
 
             # Partially apply our inherit function to the stuff
             # that is "locked into" the strand view for convenience.
-            self.inherit = lambda key: inherit_function(
+            self.inherit = lambda key, peek: inherit_function(
                 self.date,
                 self.strand,
-                key
+                key,
+                peek
             )
 
         def __contains__(self, key):
@@ -53,20 +54,28 @@ class MetadataView(object):
             strand.
 
             """
-            key_id = MetadataKey.get(key).id
+            try:
+                key_obj = MetadataKey.get(key)
+            except MetadataKey.DoesNotExist:
+                key_obj = None
 
-            result = self.strand_data.filter(
-                key__pk=key_id,
-                effective_from__lte=self.date
-            ).exists()
-
-            if result is False:
-                result = self.inherit_function(
-                    self.date,
-                    self.strand,
-                    key,
-                    peek=True
-                )
+            if not key_obj:
+                # Not a valid key, so there cannot possibly be
+                # a value for it.
+                result = False
+            elif key_obj.allow_multiple:
+                # There will always be a value for this key,
+                # even if it is just the empty list
+                result = True
+            else:
+                result = self.strand_data.filter(
+                    key__pk=key_obj.id,
+                    effective_from__lte=self.date
+                ).exclude(
+                    effective_to__lte=self.date
+                ).exists()
+                if result is False:
+                    result = self.inherit(key, True)
             return result
 
         def __getitem__(self, key):
@@ -96,14 +105,14 @@ class MetadataView(object):
             if key_obj.allow_multiple:
                 # Pull in inherited metadata too, if any
                 result = [x.value for x in active]
-                result.extend(self.inherit(key))
+                result.extend(self.inherit(key, False))
             else:
                 # Only use inherited metadata if we don't have an
                 # active value of our own.
                 try:
                     result = active.latest().value
                 except self.strand_data.model.DoesNotExist:
-                    result = self.inherit(key)
+                    result = self.inherit(key, False)
             return result
 
     def __init__(self, subject, date, inherit_function):

@@ -124,6 +124,7 @@ class SingleMetadataDictTest(TestCase):
         # KeyError
         with self.assertRaises(KeyError):
             meta_far_past['text']['single']
+        self.assertFalse('single' in meta_far_past['text'])
 
         # During the time period of meta_past, only the 'zillyhoo'
         # value of 'single' is active, and thus it isn't overridden
@@ -132,6 +133,7 @@ class SingleMetadataDictTest(TestCase):
             meta_past['text']['single'],
             'zillyhoo'
         )
+        self.assertTrue('single' in meta_past['text'])
 
         # At 2020, the active value of 'single' should be 'bank' as
         # it is effective later than anything else, but doesn't
@@ -140,6 +142,7 @@ class SingleMetadataDictTest(TestCase):
             meta_future['text']['single'],
             'bank'
         )
+        self.assertTrue('single' in meta_future['text'])
 
         # And in the far future, the latest value of 'single' should
         # be 'wello'; 'bank' has expired.
@@ -147,6 +150,7 @@ class SingleMetadataDictTest(TestCase):
             meta_far_future['text']['single'],
             'wello'
         )
+        self.assertTrue('single' in meta_far_future['text'])
 
 
 class MultipleMetadataDictTest(TestCase):
