@@ -40,6 +40,22 @@ models; this was a design decision primarily for simplicity, but has
 the result of promoting a common language or taxonomy for all objects
 inside a domain.
 
+Keys can be singular or multiple
+--------------------------------
+
+Each key can decide whether or not multiple instances of itself in a
+strand are allowed, via the
+:attr:`metadata.models.MetadataKey.allow_multiple` field.
+
+When retrieving a multiple-use metadatum, all values active during the
+reference date are returned in a list (and the empty list is used to
+represent no active data); otherwise the latest value is returned (and
+a :class:`KeyError` is raised if none are active).
+
+This distinction allows the metadata system to store items such as
+titles and descriptions unambiguously whilst also being usable for
+storing, for example, arbitrary tags or notes.
+
 Metadata has history
 --------------------
 
@@ -53,23 +69,3 @@ Metadata has approvers and creators
 
 Metadata also tracks who created it, and (optionally) who approved it
 for usage.
-
-How can I access metadata?
-==========================
-
-By default, the metadata of a subject model can be accessed through
-the :attr:`MetadataSubjectMixin.metadata` pseudo-field, which
-retrieves a dict-like object of all active metadata strands on that
-field.  A method :meth:`MetadataSubjectMixin.metadata_at()` allows
-finer-grained control over this object, including overriding the
-current reference date (to look at historical or future metadata).
-
-Each strand can then also be accessed like a dict, with metadata
-accessed via its key's name, ID or the key object itself as the dict
-key.
-
-The first strand defined on a model is special: it by default serves
-as the fallback for any attribute requests on the subject itself.
-This allows you to specify, for example, ``foo.title`` instead of
-``foo.metadata['text']['title']``, and should help with migration to
-the metadata system from discrete fields.
