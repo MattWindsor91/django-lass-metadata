@@ -31,10 +31,18 @@ class MetadataSubjectTest(models.Model,
     class Meta(object):
         app_label = 'metadata'
 
+    @classmethod
+    def make_foreign_key(cls, nullable=False):
+        return models.ForeignKey(
+            cls,
+            blank=nullable,
+            null=nullable,
+        )
 
 MetadataSubjectTestTextMetadata = TextMetadata.make_model(
     MetadataSubjectTest,
     'metadata',
+    fkey=MetadataSubjectTest.make_foreign_key(nullable=True)
 )
 
 
@@ -45,7 +53,7 @@ TestImageMetadata = ImageMetadata.make_model(
     model_name='TestImageMetadata',
     table='frobnik',
     id_column='foobles',
-    fkey_column='badnik',
+    fkey=MetadataSubjectTest.make_foreign_key(nullable=True),
     help_text="It's the best.  Everyone will want it."
 )
 
@@ -106,6 +114,22 @@ class SingleMetadataDictTest(TestCase):
         # Should raise KeyError for a nonexistent key...
         with self.assertRaises(KeyError):
             subject.metadata['image']['nothere']
+
+    def test_default(self):
+        """
+        Tests whether default metadata works as expected.
+
+        """
+        subject = MetadataSubjectTest.objects.get(pk=1)
+        self.assertEqual(
+            subject.metadata['text']['defaulttest'],
+            'defaultWorks'
+        )
+
+        self.assertEqual(
+            subject.metadata['image']['defaulttest'],
+            'thisShouldAppear'
+        )
 
     def test_effective_range(self):
         """
@@ -177,12 +201,10 @@ class MultipleMetadataDictTest(TestCase):
         """
         subject = MetadataSubjectTest.objects.get(pk=1)
         # Should return all active metadata at the
-        # relative to range_start, in newest-first order.
-        # This means that elementB comes before elementA,
-        # as its effective_from is later!
-        self.assertEqual(
+        # relative to range_start, in an arbitrary order.
+        self.assertItemsEqual(
             subject.metadata['text']['multiple'],
-            [u'elementB', u'elementA']
+            [u'elementA', u'elementB']
         )
         # Should raise KeyError for a nonexistent key...
         with self.assertRaises(KeyError):
@@ -195,7 +217,7 @@ class MultipleMetadataDictTest(TestCase):
 
         # Since text is the default strand for our test model,
         # this shorthand should work:
-        self.assertEqual(
+        self.assertItemsEqual(
             subject.multiple,
             [u'elementB', u'elementA']
         )

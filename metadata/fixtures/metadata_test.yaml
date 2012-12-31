@@ -1,3 +1,4 @@
+# METADATA KEYS #
 - model: metadata.MetadataKey
   pk: 1
   fields:
@@ -22,6 +23,14 @@
     name: notheremul
     description: Nonexistent multiple metadata entry test.
     allow_multiple: True
+- model: metadata.MetadataKey
+  pk: 5
+  fields:
+    name: defaulttest
+    description: Default (null-key) metadata entry test.
+    allow_multiple: False
+
+# METADATA SUBJECT #
 - model: metadata.MetadataSubjectTest
   pk: 1
   fields:
@@ -113,4 +122,34 @@
     creator: 1
     approver: 2
 
-
+# DEFAULT TEST #
+- model: metadata.MetadataSubjectTestTextMetadata
+  pk: 7
+  fields:
+    key: 5
+    element: Null
+    value: defaultWorks
+    effective_from: "2007-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2
+- model: metadata.TestImageMetadata
+  pk: 8
+  fields:
+    key: 5
+    element: Null
+    value: thisShouldNotAppear
+    effective_from: "2007-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2
+- model: metadata.TestImageMetadata
+  pk: 9
+  fields:
+    key: 5
+    element: 1
+    value: thisShouldAppear
+    effective_from: "2006-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2

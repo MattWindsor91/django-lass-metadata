@@ -4,7 +4,11 @@ accessed in a common manner is described.
 """
 
 from django.utils import timezone
+
+from metadata.hooks import QueryFailureError, DEFAULT_HOOKS, run_query
 from metadata.models.key import MetadataKey
+from metadata.query import INITIAL_QUERY_STATE
+from metadata.query import MetadataQuery, EXISTS, VALUE
 
 
 class MetadataView(object):
@@ -21,32 +25,29 @@ class MetadataView(object):
         as a dictionary.
 
         """
-        def __init__(self, subject, date, strand, inherit_function):
+        def __init__(self, subject, date, strand, hooks):
             """
             Initialises the strand view.
 
-            Keyword arguments:
-            subject - see MetadataView.__init__
-            date - see MetadataView.__init__
-            strand - the strand of metadata (for example 'text',
+            :param subject: see MetadataView.__init__
+
+            :param date: see MetadataView.__init__
+
+            :param strand: The strand of metadata (for example 'text',
                 'images' etc) that this view is operating on
-            inherit_function - the function, given a date, strand and
-                key, to call if a piece of metadata is missing
+
+            :param hooks: The set of metadata hooks to use to retrieve
+                metadata.
 
             """
-            self.subject = subject
-            self.date = date
-            self.strand = strand
-            self.strand_data = self.subject.metadata_strands()[strand]
-
-            # Partially apply our inherit function to the stuff
-            # that is "locked into" the strand view for convenience.
-            self.inherit = lambda key, peek: inherit_function(
-                self.date,
-                self.strand,
+            self.query = lambda key, query_type: MetadataQuery(
+                subject,
+                date,
                 key,
-                peek
+                strand,
+                query_type
             )
+            self.run_q = lambda query: run_query(query, hooks)
 
         def __contains__(self, key):
             """
@@ -54,82 +55,60 @@ class MetadataView(object):
             strand.
 
             """
-            try:
-                key_obj = MetadataKey.get(key)
-            except MetadataKey.DoesNotExist:
-                key_obj = None
-
-            if not key_obj:
-                # Not a valid key, so there cannot possibly be
-                # a value for it.
-                result = False
-            elif key_obj.allow_multiple:
-                # There will always be a value for this key,
-                # even if it is just the empty list
-                result = True
-            else:
-                result = self.strand_data.filter(
-                    key__pk=key_obj.id,
-                    effective_from__lte=self.date
-                ).exclude(
-                    effective_to__lte=self.date
-                ).exists()
-                if result is False:
-                    result = self.inherit(key, True)
-            return result
+            return self.run(key, EXISTS)
 
         def __getitem__(self, key):
             """
-            Attempts to get a metadatum in the current
-            strand.
+            Attempts to get a metadatum in the current strand.
 
             """
-            # First let's see if the key actually exists.
-            try:
-                key_obj = MetadataKey.get(key)
-            except MetadataKey.DoesNotExist:
-                raise KeyError(
-                    'No such metadata key {0}.'.format(key)
-                )
-            # Now try to get the actual metadata that is active
-            # at our reference date.
-            active = self.strand_data.filter(
-                key__pk=key_obj.id,
-                effective_from__lte=self.date
-            ).exclude(
-                effective_to__lte=self.date
-            ).order_by(
-                '-effective_from'
-            )
+            return self.run(key, VALUE)
 
-            if key_obj.allow_multiple:
-                # Pull in inherited metadata too, if any
-                result = [x.value for x in active]
-                result.extend(self.inherit(key, False))
+        def run(self, key, query_type):
+            """
+            Wrapper over query running.
+
+            """
+            try:
+                q = self.query(key, query_type)
+            except MetadataKey.DoesNotExist:
+                # 'key' turns out not to exist
+                # What we do here is based on the query type
+                # - if we can get away with returning the initial
+                # query state then we will.
+                result = INITIAL_QUERY_STATE[query_type]
+                if result is None:
+                    # Sounds like we can't return anything without
+                    # a key...
+                    raise KeyError(
+                        'Key {0} is not a valid metadata key'.format(
+                            key
+                        )
+                    )
             else:
-                # Only use inherited metadata if we don't have an
-                # active value of our own.
                 try:
-                    result = active.latest().value
-                except self.strand_data.model.DoesNotExist:
-                    result = self.inherit(key, False)
+                    result = self.run_q(q)
+                except QueryFailureError:
+                    raise KeyError(
+                        'No metadata found for {0}.'.format(key)
+                    )
             return result
 
-    def __init__(self, subject, date, inherit_function):
+    def __init__(self, subject, date, hooks):
         """Initialises the metadata view.
 
-        Keyword arguments:
-        subject - the object whose metadata is being presented as a
-            dictionary
-        date - the date representing the period of time used to
-            decide what constitutes "active" metadata
-        inherit_function - the function, given a date, strand and
-            key, to call if a piece of metadata is missing
+        :param subject: The object whose metadata is being presented
+            as a dictionary.
+
+        :param date: The date representing the period of time used to
+            decide what constitutes "active" metadata.
+
+        :param hooks: The set of metadata hooks used to find metadata.
 
         """
         self.subject = subject
         self.date = date
-        self.inherit_function = inherit_function
+        self.hooks = hooks
 
     def __call__(self, date=None):
         """
@@ -143,7 +122,7 @@ class MetadataView(object):
         return self if not date else self.__class__(
             self.subject,
             date,
-            self.inherit_function
+            self.hooks
         )
 
     def __contains__(self, strand):
@@ -158,7 +137,7 @@ class MetadataView(object):
             self.subject,
             self.date,
             strand,
-            self.inherit_function
+            self.hooks
         )
 
 
@@ -186,38 +165,19 @@ class MetadataSubjectMixin(object):
 
     ## OPTIONAL OVERRIDES ##
 
-    def default_inherit_function(self, date, strand, key, peek=False):
+    def metadata_hooks(self):
         """
-        Default inheritance function, which tries to access the
-        metadata on this subject's metadata parent, and throws a
-        :class:`KeyError` if no parent exists.
+        Returns an iterable of metadata hooks.
 
-        If *peek* is True, the function should instead return True if
-        the metadata key exists, and False if otherwise.
+        Metadata hooks are functions taking a date, metadata
+        strand, key and a boolean specifying whether or not to peek
+        instead of returning a value, and returning a metadata
+        value, or raising :class:`KeyError` if no such value exists.
 
-        This can be overridden.
-
+        The default behaviour is to return
+        :data:`metadata.hooks.DEFAULT_HOOKS`.
         """
-        value = None
-        value_found = False
-
-        if hasattr(self, 'metadata_parent'):
-            if self.metadata_parent():
-                met = self.metadata_parent().metadata_at(date)[strand]
-                value = (key in met) if peek else met[key]
-                value_found = True
-
-        if not value_found:
-            if peek:
-                value = False
-            elif MetadataKey.get(key).allow_multiple:
-                value = []
-            else:
-                raise KeyError(
-                    'No metadata at {0} in strand {1}:{2} called {3}.'
-                    .format(date, self, strand, key)
-                )
-        return value
+        return DEFAULT_HOOKS
 
     def metadata_parent(self):
         """
@@ -263,7 +223,7 @@ class MetadataSubjectMixin(object):
 
     ## OTHER FUNCTIONS ##
 
-    def metadata_at(self, date, inherit_function=None):
+    def metadata_at(self, date, hooks=None):
         """
         Returns a dict-like object that allows the strands of
         metadata active on this item at the given time.
@@ -281,7 +241,5 @@ class MetadataSubjectMixin(object):
         return MetadataView(
             self,
             date,
-            (self.default_inherit_function
-             if not inherit_function
-             else inherit_function)
+            (self.metadata_hooks() if not hooks else hooks)
         )
