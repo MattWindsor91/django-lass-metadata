@@ -20,7 +20,7 @@ class MetadataSubjectTest(models.Model,
     test = models.TextField()
 
     def range_start(self):
-        return timezone.now().replace(year=2008)
+        return timezone.now().replace(day=1, month=5, year=2008)
 
     def metadata_strands(self):
         return {
