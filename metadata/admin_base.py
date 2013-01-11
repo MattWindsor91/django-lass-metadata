@@ -18,8 +18,8 @@ class MetadataAdmin(admin.ModelAdmin):
     )
 
 
-class MetadataInline(admin.TabularInline):
-    """Base inline class for metadata inline admin-lets."""
+class GeneralMetadataInline(admin.TabularInline):
+    """Base inline class for anything that's like metadata."""
 
     # Doing this makes the siteadmin virtually unuseable without JS,
     # but closes an annoying bug that causes the extra fields to
@@ -47,6 +47,19 @@ class MetadataInline(admin.TabularInline):
         )
 
 
+class MetadataInline(admin.TabularInline):
+    """Base inline class for metadata inline admin-lets."""
+
+    fields = (
+        'key',
+        'value',
+        'effective_from',
+        'effective_to',
+        'approver',
+        'creator',
+    )
+
+
 class TextMetadataInline(MetadataInline):
     """Specialisation of MetadataInline for text metadata."""
 
@@ -60,8 +73,17 @@ class ImageMetadataInline(MetadataInline):
     verbose_name = "associated image"
     verbose_name_plural = "Associated images"
 
-class PackageEntryInline(MetadataInline):
+
+class PackageEntryInline(GeneralMetadataInline):
     """Snap-in for editing package entries inline."""
 
     verbose_name = "branding package"
     verbose_name_plural = "branding packages"
+
+    fields = (
+        'package',
+        'effective_from',
+        'effective_to',
+        'approver',
+        'creator',
+    )
