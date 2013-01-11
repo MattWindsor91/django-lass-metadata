@@ -60,7 +60,7 @@ class ImageMetadataInline(MetadataInline):
     verbose_name = "associated image"
     verbose_name_plural = "Associated images"
 
-class PackageEntryInline(admin.TabularInline):
+class PackageEntryInline(MetadataInline):
     """Snap-in for editing package entries inline."""
 
     verbose_name = "branding package"
