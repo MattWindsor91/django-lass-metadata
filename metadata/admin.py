@@ -39,6 +39,7 @@ class PackageAdmin(admin.ModelAdmin):
     An administration snap-in for maintaining the list of packages.
 
     """
+    list_display = ('name', 'description', 'weight')
     inlines = [PackageTextMetadataInline, PackageImageMetadataInline]
 
 
