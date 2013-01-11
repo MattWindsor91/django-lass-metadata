@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from metadata.mixins import MetadataSubjectMixin
-from metadata.models import Package, PackageEntry
+from metadata.models import PackageEntry
 from metadata.models import TextMetadata, ImageMetadata
 
 
@@ -20,10 +20,8 @@ class MetadataSubjectTest(models.Model,
     """
     test = models.TextField()
 
-    packages = models.ManyToManyField(
-        Package,
-        through='metadata.MetadataSubjectTestPackageEntry'
-    )
+    def packages(self):
+        return self.metadatasubjecttestpackageentry_set
 
     def range_start(self):
         return timezone.now().replace(day=1, month=5, year=2008)

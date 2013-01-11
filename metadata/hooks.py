@@ -174,21 +174,21 @@ def metadata_from_package(query):
     """
     subject = query.subject
     try:
-        packages = subject.metadata_packages()
+        entries = subject.packages
     except AttributeError:
         raise HookFailureError(
-            'Element does not support metadata_packages().'
+            'Element does not support packages.'
         )
 
-    if packages is None:
+    if entries is None:
         raise HookFailureError(
             'Packages explicitly disabled.'
         )
 
     found = False
-    for package in packages.all():
+    for entry in entries().at(query.date):
         try:
-            result = run_query(query.replace(subject=package))
+            result = run_query(query.replace(subject=entry.package))
         except HookFailureError:
             continue
         else:
