@@ -32,6 +32,11 @@ class Package(Type,
             db_column=settings.PACKAGE_DB_ID_COLUMN
         )
 
+    weight = models.IntegerField(
+        default=0,
+        help_text="Packages override others with lower weight."
+    )
+
     def metadata_strands(self):
         return {
             'text': self.packagetextmetadata_set,
@@ -58,6 +63,7 @@ class Package(Type,
             db_table = settings.PACKAGE_DB_TABLE
 
         app_label = 'metadata'
+        ordering = ('-weight',)
 
 
 PackageTextMetadata = TextMetadata.make_model(
