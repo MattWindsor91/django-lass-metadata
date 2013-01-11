@@ -8,6 +8,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from metadata.mixins import MetadataSubjectMixin
+from metadata.models import Package, PackageEntry
 from metadata.models import TextMetadata, ImageMetadata
 
 
@@ -18,6 +19,11 @@ class MetadataSubjectTest(models.Model,
 
     """
     test = models.TextField()
+
+    packages = models.ManyToManyField(
+        Package,
+        through='metadata.MetadataSubjectTestPackageEntry'
+    )
 
     def range_start(self):
         return timezone.now().replace(day=1, month=5, year=2008)
@@ -45,6 +51,11 @@ MetadataSubjectTestTextMetadata = TextMetadata.make_model(
     fkey=MetadataSubjectTest.make_foreign_key(nullable=True)
 )
 
+MetadataSubjectTestPackageEntry = PackageEntry.make_model(
+    MetadataSubjectTest,
+    'metadata',
+    fkey=MetadataSubjectTest.make_foreign_key(nullable=True)
+)
 
 # See if overriding as much as possible works
 TestImageMetadata = ImageMetadata.make_model(
@@ -56,6 +67,36 @@ TestImageMetadata = ImageMetadata.make_model(
     fkey=MetadataSubjectTest.make_foreign_key(nullable=True),
     help_text="It's the best.  Everyone will want it."
 )
+
+
+class PackageTest(TestCase):
+    """
+    Tests to see if the metadata packages system is hooked in
+    correctly and used as a fallback metadata source.
+
+    """
+    fixtures = ['test_people', 'metadata_test', 'package_test']
+
+    def test_text(self):
+        """
+        Tests whether the package is used to provide default textual
+        metadata.
+        """
+        subject = MetadataSubjectTest.objects.get(pk=1)
+
+        # This should not be overridden by the package metadata,
+        # as it exists in the model's own metadata.
+        self.assertEqual(
+            subject.metadata['text']['single'],
+            'moof!'
+        )
+        # However, this should be provided by the package.
+        self.assertEqual(
+            subject.metadata['text']['nothere'],
+            'yes it is!'
+        )
+        # TODO: Possibly unregister hook and try again, to see if
+        # this causes the above to fail.
 
 
 class SingleMetadataDictTest(TestCase):

@@ -1,0 +1,30 @@
+- model: metadata.Package
+  pk: 1
+  fields:
+    name: test
+    description: Test package
+- model: metadata.MetadataSubjectTestPackageEntry
+  pk: 1
+  fields:
+    element: 1
+    package: 1
+- model: metadata.PackageTextMetadata
+  pk: 1
+  fields:
+    key: 1
+    element: 1
+    value: this shouldn not appear
+    effective_from: "2007-03-01T13:00:00Z"
+    effective_to: Null
+    creator: 1
+    approver: 2
+- model: metadata.MetadataSubjectTestTextMetadata
+  pk: 2
+  fields:
+    key: 3
+    element: 1
+    value: "yes it is!"
+    effective_from: "2000-03-01T13:00:00Z"
+    effective_to: "2009-03-01T13:00:00Z"
+    creator: 1
+    approver: 2

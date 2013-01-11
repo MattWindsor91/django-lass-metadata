@@ -160,6 +160,48 @@ def metadata_from_parent(query):
     return run_query(query.replace(subject=parent))
 
 
+def metadata_from_package(query):
+    """
+    Given a metadata query, attempts to use the query element's
+    designated metadata packages to fulfil the request.
+
+    Will raise :class:`metadata.hooks.HookFailureError` on failure.
+
+    :param query: The MetadataQuery this hook is trying to run.
+    :type query: :class:`metadata.query.MetadataQuery` or similar
+        :class:`object`.
+
+    """
+    subject = query.subject
+    try:
+        packages = subject.metadata_packages()
+    except AttributeError:
+        raise HookFailureError(
+            'Element does not support metadata_packages().'
+        )
+
+    if packages is None:
+        raise HookFailureError(
+            'Packages explicitly disabled.'
+        )
+
+    found = False
+    for package in packages.all():
+        try:
+            result = run_query(query.replace(subject=package))
+        except HookFailureError:
+            continue
+        else:
+            found = True
+            break
+    if not found:
+        raise HookFailureError(
+            'None of the packages provided metadata.'
+        )
+
+    return result
+
+
 def metadata_from_default(query):
     """
     Given a metadata query, attempts to return the default value
@@ -192,6 +234,7 @@ DEFAULT_HOOKS = [
     # TODO: metadata_from_cache
     metadata_from_strand_sets,
     metadata_from_parent,
+    metadata_from_package,
     metadata_from_default,
 ]
 
@@ -271,9 +314,4 @@ def get_active_metadata(strand_set, key, date):
     key that was active at the given date.
 
     """
-    return strand_set.filter(
-        key__pk=key.id,
-        effective_from__lte=date
-    ).exclude(
-        effective_to__lte=date
-    )
+    return strand_set.at(date).filter(key__pk=key.id)

@@ -45,3 +45,17 @@ class MetadataInline(admin.TabularInline):
             request,
             **kwargs
         )
+
+
+class TextMetadataInline(MetadataInline):
+    """Specialisation of MetadataInline for text metadata."""
+
+    verbose_name = "Associated text"
+    verbose_name_plural = "Associated text"
+
+
+class ImageMetadataInline(MetadataInline):
+    """Specialisation of MetadataInline for image metadata."""
+
+    verbose_name = "Associated image"
+    verbose_name_plural = "Associated images"

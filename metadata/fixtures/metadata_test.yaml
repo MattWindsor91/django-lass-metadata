@@ -37,7 +37,6 @@
     test: test
 
 # SINGLE METADATA
-
 - model: metadata.MetadataSubjectTestTextMetadata
   pk: 1
   fields:

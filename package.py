@@ -52,3 +52,4 @@ class GenericMetadata(ApprovableMixin,
         help_text="""The key, or type, of the metadata entry.""",
         **kwargs
     )
+
