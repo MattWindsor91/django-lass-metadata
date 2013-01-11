@@ -40,7 +40,10 @@ class GeneralMetadataInline(admin.TabularInline):
         )
         if is_user_field:
             kwargs['initial'] = request.user.id
-        return super(MetadataInline, self).formfield_for_foreignkey(
+        return super(
+            GeneralMetadataInline,
+            self
+        ).formfield_for_foreignkey(
             db_field,
             request,
             **kwargs
