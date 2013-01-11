@@ -50,7 +50,7 @@ class GeneralMetadataInline(admin.TabularInline):
         )
 
 
-class MetadataInline(admin.TabularInline):
+class MetadataInline(GeneralMetadataInline):
     """Base inline class for metadata inline admin-lets."""
 
     fields = (
