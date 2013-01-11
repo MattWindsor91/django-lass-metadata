@@ -50,12 +50,18 @@ class MetadataInline(admin.TabularInline):
 class TextMetadataInline(MetadataInline):
     """Specialisation of MetadataInline for text metadata."""
 
-    verbose_name = "Associated text"
-    verbose_name_plural = "Associated text"
+    verbose_name = "associated text item"
+    verbose_name_plural = "associated text items"
 
 
 class ImageMetadataInline(MetadataInline):
     """Specialisation of MetadataInline for image metadata."""
 
-    verbose_name = "Associated image"
+    verbose_name = "associated image"
     verbose_name_plural = "Associated images"
+
+class PackageEntryInline(admin.TabularInline):
+    """Snap-in for editing package entries inline."""
+
+    verbose_name = "branding package"
+    verbose_name_plural = "branding packages"
