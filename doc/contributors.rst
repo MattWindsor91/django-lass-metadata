@@ -4,7 +4,7 @@
 Contributors
 ============
 
-This section lists contributors to the :mod:`lass_utils` package.
+This section lists contributors to the :mod:`metadata` package.
 
 Where possible authors of contributed modules/apps used as
 dependencies to the project will be recognised; however this list
