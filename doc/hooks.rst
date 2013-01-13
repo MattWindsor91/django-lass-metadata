@@ -51,27 +51,5 @@ API <subjects>`, unless the subject has overridden the default
 behaviour, the hooks in :py:data:`metadata.hooks.DEFAULT_HOOKS` are
 called.
 
-metadata_from_strand_sets
--------------------------
-
-This checks to see if the metadata sets in the subject itself contain
-the value.
-
-metadata_from_parent
---------------------
-
-This attempts to "inherit" the metadata from the subject's designated
-parent(s).
-
-metadata_from_package
----------------------
-
-If the metadata subject has a method ``packages`` which returns a
-set of package entries, this hook checks to see if any of those
-packages specify the metadata.
-
-metadata_from_default
----------------------
-
-This checks to see if a :ref:`default value <default>` for the
-requested piece of metadata is available.
+The current set of default hooks and their semantics can be found in the
+API documentation for :py:module:`metadata.hooks`.
