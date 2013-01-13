@@ -85,8 +85,8 @@ Administration hooks
     :undoc-members:
     :show-inheritance:
 
-tests
------
+Unit tests
+----------
 
 .. automodule:: metadata.tests
     :deprecated:
@@ -98,6 +98,24 @@ admin_base
 ----------
 
 .. automodule:: metadata.admin_base
+    :deprecated:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Hooks
+-----
+
+.. automodule:: metadata.hooks
+    :deprecated:
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Queries
+-------
+
+.. automodule:: metadata.query
     :deprecated:
     :members:
     :undoc-members:
