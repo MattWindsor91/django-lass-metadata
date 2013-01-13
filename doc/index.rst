@@ -21,6 +21,7 @@ Contents
     licence
     contributors
     overview
+    details
     apidocs
 
 Indices and tables
