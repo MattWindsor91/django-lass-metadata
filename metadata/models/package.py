@@ -78,7 +78,6 @@ PackageTextMetadata = TextMetadata.make_model(
         settings, 'PACKAGE_TEXT_METADATA_DB_ID_COLUMN',
         None
     ),
-    help_text='The package associated with this textual metadata.',
     fkey=Package.make_foreign_key(),
 )
 
@@ -95,7 +94,6 @@ PackageImageMetadata = ImageMetadata.make_model(
         settings, 'PACKAGE_IMAGE_METADATA_DB_ID_COLUMN',
         None
     ),
-    help_text='The package associated with this image metadata.',
     fkey=Package.make_foreign_key(),
 )
 

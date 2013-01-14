@@ -63,7 +63,6 @@ TestImageMetadata = ImageMetadata.make_model(
     table='frobnik',
     id_column='foobles',
     fkey=MetadataSubjectTest.make_foreign_key(nullable=True),
-    help_text="It's the best.  Everyone will want it."
 )
 
 

@@ -10,4 +10,12 @@ the metadata system and how it works.
 
     usage
     packages
+    subjects
+
+The lower level
+===============
+
+.. toctree::
+    :maxdepth: 2
     hooks
+    queries
