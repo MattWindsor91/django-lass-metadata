@@ -157,3 +157,22 @@ class MetadataQuery(object):
         }
         init_args.update(kwargs)
         return self.__class__(**init_args)
+
+    ##################################################################
+    # Other uses of queries
+
+    def cache_key(self):
+        """
+        Returns a representation of the query that can be used as a
+        cache key.
+
+        :rtype: basestring
+
+        """
+        return '{0}-{1}-{2}-{3}'.format(
+            self.subject.__class__,
+            self.date,
+            self.strand,
+            self.key,
+            self.query_type
+        ).replace('_', '__').replace(' ', '_')

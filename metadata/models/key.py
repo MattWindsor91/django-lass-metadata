@@ -10,7 +10,8 @@ from lass_utils.models import Type
 
 
 class MetadataKey(Type):
-    """A metadata key, which defines the semantics of a piece of
+    """
+    A metadata key, which defines the semantics of a piece of
     metadata.
 
     """
@@ -21,6 +22,12 @@ class MetadataKey(Type):
             can be active at the same time (e.g. arbitrary tags).
 
             """)
+    cache_duration = models.PositiveIntegerField(
+        default=300,
+        help_text="The duration, in seconds, of any cache entries"
+            "for metadata with this key."
+    )
+    
     if hasattr(settings, 'METADATA_KEY_DB_ID_COLUMN'):
         id = models.AutoField(
             primary_key=True,

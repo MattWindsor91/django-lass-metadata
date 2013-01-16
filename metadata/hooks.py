@@ -4,6 +4,8 @@ running metadata hooks on queries.
 
 """
 
+from django.core.cache import cache
+
 from metadata.query import COUNT, EXISTS, VALUE
 
 
@@ -81,6 +83,7 @@ def run_query(query, hooks=None):
             )
         )
 
+    cache.set(query.cache_key(), result, query.key.cache_duration)
     return result
 
 
@@ -104,8 +107,25 @@ class HookFailureError(Exception):
         """
         Produces a string representation of this exception.
 
+		:return 
         """
         return repr(self.value)
+
+
+def metadata_from_cache(query):
+    """
+    Given a metadata query, attempts to fulfil the request using
+    the Django cache.
+
+    :param query: The MetadataQuery this hook is trying to run.
+    :type query: :class:`metadata.query.MetadataQuery` or similar
+        :class:`object`.
+
+    """
+    val = cache.get(query.cache_key())
+    if val is None:
+        raise HookFailureError('Cache miss.')
+    return val
 
 
 def metadata_from_strand_sets(query):
