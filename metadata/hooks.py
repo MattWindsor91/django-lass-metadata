@@ -5,6 +5,7 @@ running metadata hooks on queries.
 """
 
 from django.core.cache import cache
+from django.core.exceptions import FieldError
 
 from metadata.query import COUNT, EXISTS, VALUE
 
@@ -109,7 +110,6 @@ class HookFailureError(Exception):
         """
         Produces a string representation of this exception.
 
-		:return 
         """
         return repr(self.value)
 
@@ -240,11 +240,17 @@ def metadata_from_default(query):
 
     """
     strand_set = get_strand_set(query)
-    active_metadata = get_active_metadata(
-        strand_set.model.objects.filter(element__isnull=True),
-        query.key,
-        query.date
-    )
+    try:
+        active_metadata = get_active_metadata(
+            strand_set.model.objects.filter(element__isnull=True),
+            query.key,
+            query.date
+        )
+    except FieldError:
+        raise HookFailureError(
+            "FieldError - usually this means there isn't an element "
+            "field."
+        )
     return handle_set(
         active_metadata,
         query.key.allow_multiple,
