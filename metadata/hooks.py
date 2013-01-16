@@ -83,7 +83,9 @@ def run_query(query, hooks=None):
             )
         )
 
-    cache.set(query.cache_key(), result, query.key.cache_duration)
+    dur = query.key.cache_duration
+    if dur > 0:
+        cache.set(query.cache_key(), result, dur)
     return result
 
 
@@ -122,6 +124,9 @@ def metadata_from_cache(query):
         :class:`object`.
 
     """
+    if query.key.cache_duration == 0:
+        raise HookFailureError('Not caching this metadata.')
+
     val = cache.get(query.cache_key())
     if val is None:
         raise HookFailureError('Cache miss.')
