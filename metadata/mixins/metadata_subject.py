@@ -64,6 +64,13 @@ class MetadataView(object):
             """
             return self.run(key, VALUE)
 
+        def get(self, key, default=None):
+            try:
+                val = self[key]
+            except KeyError:
+                val = default
+            return val
+
         def run(self, key, query_type):
             """
             Wrapper over query running.
