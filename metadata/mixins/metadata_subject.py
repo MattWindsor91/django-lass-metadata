@@ -209,6 +209,9 @@ class MetadataSubjectMixin(object):
             if name == 'metadata':
                 result = self.metadata_at(now)
                 result_def = True
+            elif name in self.metadata_strands():
+                result = self.metadata_at(now)[name]
+                result_def = True
             elif not name.startswith('_'):
                 for strand in self.metadata_strands():
                     md = self.metadata_at(now)[strand]
