@@ -16,7 +16,10 @@ def image_text(element, key):
     if it does not.
 
     """
+    istrand = getattr(element.image[key], None)
+    image = None if not istrand else istrand.get(key)
+
     return {
-        'image': getattr(element.image[key], None),
+        'image': image,
         'text': element.text[key]
     }
