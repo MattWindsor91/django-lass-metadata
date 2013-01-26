@@ -240,7 +240,7 @@ class MetadataSubjectMixin(object):
             if not hasattr(self, 'range_start')
             else self.range_start()
         )
-        result = False
+        result_def = False
         if name == 'metadata':
             result = self.metadata_at(now)
             result_def = True
