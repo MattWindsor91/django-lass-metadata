@@ -209,29 +209,52 @@ class MetadataSubjectMixin(object):
         result = None
         result_def = False
 
-        if name != 'range_start':
-            now = (timezone.now()
-                   if not hasattr(self, 'range_start')
-                   else self.range_start())
-            if name == 'metadata':
-                result = self.metadata_at(now)
-                result_def = True
-            elif name in self.metadata_strands():
-                result = self.metadata_at(now)[name]
-                result_def = True
-            elif not name.startswith('_'):
-                for strand in self.metadata_strands():
-                    md = self.metadata_at(now)[strand]
-                    if name in md:
-                        result = md[name]
-                        result_def = True
-                        break
+        # Some slightly heuristic-y checks to make sure that we
+        # don't enter an infinite getattr loop
+        about_to_recurse = (
+            name.endswith('metadata_set')
+            or name == 'range_start'
+            or name.startswith('_')
+        )
+        if about_to_recurse:
+            raise AttributeError
+
+        result, result_def = self.getattr_metadata(name)
 
         if not result_def:
             raise AttributeError
         return result
 
     ## OTHER FUNCTIONS ##
+
+    def getattr_metadata(self, name):
+        """
+        Hook for __getattr__ to check the subject's metadata sets.
+
+        You should almost never need to call this outside of
+        __getattr__.
+
+        """
+        now = (
+            timezone.now()
+            if not hasattr(self, 'range_start')
+            else self.range_start()
+        )
+        result = False
+        if name == 'metadata':
+            result = self.metadata_at(now)
+            result_def = True
+        elif name in self.metadata_strands():
+            result = self.metadata_at(now)[name]
+            result_def = True
+        else:
+            for strand in self.metadata_strands():
+                md = self.metadata_at(now)[strand]
+                if name in md:
+                    result = md[name]
+                    result_def = True
+                    break
+        return result, result_def
 
     def metadata_at(self, date, hooks=None):
         """
