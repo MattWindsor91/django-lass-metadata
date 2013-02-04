@@ -169,10 +169,10 @@ class MetadataQuery(object):
         :rtype: basestring
 
         """
-        return '{0}-{1}-{2}-{3}'.format(
+        return '-'.join((repr(x) for x in (
             self.subject.__class__,
             self.date,
             self.strand,
             self.key,
             self.query_type
-        ).replace('_', '__').replace(' ', '_')
+        ))).replace('_', '__').replace(' ', '_')

@@ -262,7 +262,7 @@ def metadata_from_default(query):
 # Default hooks list
 
 DEFAULT_HOOKS = [
-    # TODO: metadata_from_cache
+    metadata_from_cache,
     metadata_from_strand_sets,
     metadata_from_parent,
     metadata_from_package,
