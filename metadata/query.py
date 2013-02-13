@@ -110,7 +110,7 @@ class MetadataQuery(object):
             result = s if mul else max(1, s)
         else:
             raise ValueError(
-                'Unsupported query type {0}'.format(
+                'Unsupported query type {}'.format(
                     self.query_type
                 )
             )

@@ -79,7 +79,7 @@ def run_query(query, hooks=None):
 
     if awaiting_result:
         raise QueryFailureError(
-            "All hooks {0} exhausted.".format(
+            "All hooks {} exhausted.".format(
                 hooks
             )
         )
@@ -293,7 +293,7 @@ def get_strand_set(query):
         strand_set = strand_sets[st]
     except KeyError:
         raise HookFailureError(
-            "Element doesn't have {0} in its strand sets.".format(
+            "Element doesn't have {} in its strand sets.".format(
                 st
             )
         )
@@ -333,7 +333,7 @@ def handle_set(metadata, allow_multiple, query_type):
         result = metadata.exists()
     else:
         raise HookFailureError(
-            'Unsupported query type {0}'.format(query_type)
+            'Unsupported query type {}'.format(query_type)
         )
 
     return result
