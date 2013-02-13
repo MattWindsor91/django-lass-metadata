@@ -210,13 +210,20 @@ class MetadataSubjectMixin(object):
         result_def = False
 
         # Some slightly heuristic-y checks to make sure that we
-        # don't enter an infinite getattr loop
-        about_to_recurse = (
+        # don't enter an infinite getattr loop, or try to run metadata
+        # checks for silly things (like methods the metadata system
+        # will call itself)
+        avoid_metadata_lookup = (
             name.endswith('metadata_set')
-            or name == 'range_start'
+            or name in (
+                'packages',
+                'metadata_parents',
+                'metadata_parent',
+                'range_start'
+            )
             or name.startswith('_')
         )
-        if about_to_recurse:
+        if avoid_metadata_lookup:
             raise AttributeError
 
         result, result_def = self.getattr_metadata(name)
