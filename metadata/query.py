@@ -3,6 +3,8 @@ In which a *metadata query* is defined.
 
 """
 
+import hashlib
+
 from django.utils import timezone
 
 from metadata.models.key import MetadataKey
@@ -178,11 +180,19 @@ class MetadataQuery(object):
         :rtype: basestring
 
         """
-        return '-'.join((repr(x) for x in (
+        # This used to be a human-readable string, but given memcached's
+        # rather stringent key requirements it's easier to just bung all
+        # the information that makes queries unique (and only that information)
+        # in a hash.
+        h = hashlib.md5()
+        components = [
             self.subject.__class__,
             self.subject.pk,
             self._date,
             self.strand,
-            self.key,
+            self.key.name,
             self.query_type
-        ))).replace('_', '__').replace(' ', '_')
+        ]
+        for c in components:
+            h.update(repr(c))
+        return h.hexdigest()
