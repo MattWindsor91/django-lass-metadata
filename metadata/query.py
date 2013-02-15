@@ -180,6 +180,7 @@ class MetadataQuery(object):
         """
         return '-'.join((repr(x) for x in (
             self.subject.__class__,
+            self.subject.id,
             self._date,
             self.strand,
             self.key,
