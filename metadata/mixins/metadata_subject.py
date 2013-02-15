@@ -3,8 +3,6 @@ accessed in a common manner is described.
 
 """
 
-from django.utils import timezone
-
 from metadata.hooks import QueryFailureError, DEFAULT_HOOKS, run_query
 from metadata.models.key import MetadataKey
 from metadata.query import INITIAL_QUERY_STATE
@@ -88,7 +86,7 @@ class MetadataView(object):
                     # Sounds like we can't return anything without
                     # a key...
                     raise KeyError(
-                        'Key {0} is not a valid metadata key'.format(
+                        'Key {} is not a valid metadata key'.format(
                             key
                         )
                     )
@@ -97,7 +95,7 @@ class MetadataView(object):
                     result = self.run_q(q)
                 except QueryFailureError:
                     raise KeyError(
-                        'No metadata found for {0}.'.format(key)
+                        'No metadata found for {}.'.format(key)
                     )
             return result
 
@@ -116,21 +114,6 @@ class MetadataView(object):
         self.subject = subject
         self.date = date
         self.hooks = hooks
-
-    def __call__(self, date=None):
-        """
-        Backwards compatibility for any code that calls metadata(),
-        or metadata(date).
-
-        New code should use metadata as a field, or call
-        metadata_at(date).
-
-        """
-        return self if not date else self.__class__(
-            self.subject,
-            date,
-            self.hooks
-        )
 
     def __contains__(self, strand):
         """Checks to see if a named strand is present."""
@@ -167,8 +150,7 @@ class MetadataSubjectMixin(object):
         This should invariably be overridden in mixin users.
 
         """
-        raise NotImplementedError(
-            'Must implement metadata_strands.')
+        raise NotImplementedError('Must implement metadata_strands.')
 
     ## OPTIONAL OVERRIDES ##
 
@@ -242,11 +224,7 @@ class MetadataSubjectMixin(object):
         __getattr__.
 
         """
-        now = (
-            timezone.now()
-            if not hasattr(self, 'range_start')
-            else self.range_start()
-        )
+        now = getattr(self, 'range_start', None)
         result = None
         result_def = False
 

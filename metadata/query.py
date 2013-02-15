@@ -3,6 +3,8 @@ In which a *metadata query* is defined.
 
 """
 
+from django.utils import timezone
+
 from metadata.models.key import MetadataKey
 
 VALUE = 0
@@ -67,14 +69,13 @@ class MetadataQuery(object):
                 'Invalid query type.'
             )
 
-        if not isinstance(key, MetadataKey):
-            key = MetadataKey.get(key)
-
         self.subject = subject
-        self.date = date
+        self._date = date
         self.strand = strand
-        self.key = key
+        self.key = MetadataKey.get(key)
         self.query_type = query_type
+
+        self.construct_date = timezone.now()
 
     ##################################################################
     # Functions for manipulating query running results
@@ -102,7 +103,7 @@ class MetadataQuery(object):
         mul = self.key.allow_multiple
 
         if self.query_type == VALUE:
-            result = old if not mul else old + new
+            result = old if not mul else old | new
         elif self.query_type == EXISTS:
             result = old or new
         elif self.query_type == COUNT:
@@ -150,7 +151,7 @@ class MetadataQuery(object):
         """
         init_args = {
             'subject': self.subject,
-            'date': self.date,
+            'date': self._date,
             'strand': self.strand,
             'key': self.key,
             'query_type': self.query_type
@@ -160,6 +161,14 @@ class MetadataQuery(object):
 
     ##################################################################
     # Other uses of queries
+
+    @property
+    def date(self):
+        """Returns the target metadata date of this query.
+
+        This will be the time of query creation if no date was specified.
+        """
+        return self._date if self._date else self.construct_date
 
     def cache_key(self):
         """
@@ -171,7 +180,7 @@ class MetadataQuery(object):
         """
         return '-'.join((repr(x) for x in (
             self.subject.__class__,
-            self.date,
+            self._date,
             self.strand,
             self.key,
             self.query_type

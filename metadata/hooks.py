@@ -10,7 +10,7 @@ from django.core.exceptions import FieldError
 from metadata.query import COUNT, EXISTS, VALUE
 
 
-######################################################################
+###############################################################################
 # Running queries
 
 class QueryFailureError(Exception):
@@ -258,7 +258,7 @@ def metadata_from_default(query):
     )
 
 
-######################################################################
+###############################################################################
 # Default hooks list
 
 DEFAULT_HOOKS = [
@@ -270,7 +270,7 @@ DEFAULT_HOOKS = [
 ]
 
 
-######################################################################
+###############################################################################
 # Utility functions
 
 def get_strand_set(query):
@@ -293,9 +293,7 @@ def get_strand_set(query):
         strand_set = strand_sets[st]
     except KeyError:
         raise HookFailureError(
-            "Element doesn't have {} in its strand sets.".format(
-                st
-            )
+            "Element doesn't have {} in its strand sets.".format(st)
         )
     return strand_set
 
@@ -318,23 +316,19 @@ def handle_set(metadata, allow_multiple, query_type):
     """
     if query_type == VALUE:
         if allow_multiple:
-            result = [x.value for x in metadata]
+            result = set(metadata)
         else:
             try:
-                result = metadata.latest().value
+                result = metadata.latest()
             except metadata.model.DoesNotExist:
-                raise HookFailureError(
-                    "No match."
-                )
+                raise HookFailureError("No match.")
     elif query_type == COUNT:
         count = metadata.count()
         result = count if allow_multiple else max(1, count)
     elif query_type == EXISTS:
         result = metadata.exists()
     else:
-        raise HookFailureError(
-            'Unsupported query type {}'.format(query_type)
-        )
+        raise HookFailureError('Unsupported query type {}'.format(query_type))
 
     return result
 
@@ -345,4 +339,6 @@ def get_active_metadata(strand_set, key, date):
     key that was active at the given date.
 
     """
-    return strand_set.at(date).filter(key__pk=key.id)
+    return strand_set.at(date).filter(key__pk=key.id).values_list(
+        'value', flat=True
+    )

@@ -1,6 +1,8 @@
 """
 Test suite for the ``metadata`` package.
 
+TODO: Cache tests
+
 """
 
 from django.db import models
@@ -239,18 +241,18 @@ class MultipleMetadataDictTest(TestCase):
         """
         subject = MetadataSubjectTest.objects.get(pk=1)
         # Should return all active metadata at the
-        # relative to range_start, in an arbitrary order.
-        self.assertItemsEqual(
+        # relative to range_start.
+        self.assertEqual(
             subject.metadata['text']['multiple'],
-            [u'elementA', u'elementB']
+            {u'elementA', u'elementB'}
         )
         # Should raise KeyError for a nonexistent key...
         with self.assertRaises(KeyError):
             subject.metadata['text']['notakey']
-        # ...but should return the empty list for a valid empty key.
+        # ...but should return the empty set for a valid empty key.
         self.assertEqual(
             subject.metadata['text']['notheremul'],
-            []
+            set()
         )
 
         # Since text is the default strand for our test model,
@@ -268,15 +270,15 @@ class MultipleMetadataDictTest(TestCase):
         subject = MetadataSubjectTest.objects.get(pk=1)
         md = subject.metadata['image']['multiple']
 
-        self.assertIsInstance(md, list)
+        self.assertIsInstance(md, set)
         self.assertTrue(len(md) == 1)
 
         self.assertIn(
             u'singleton.jpg',
             subject.metadata['image']['multiple']
         )
-        # Should raise KeyError for a nonexistent key...
+        # Should give the empty set for a valid but empty key.
         self.assertEqual(
             subject.metadata['image']['notheremul'],
-            []
+            set()
         )
