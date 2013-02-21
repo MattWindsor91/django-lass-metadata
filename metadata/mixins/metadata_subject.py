@@ -237,9 +237,15 @@ class MetadataSubjectMixin(object):
         else:
             for strand in self.metadata_strands():
                 md = self.metadata_at(now)[strand]
-                if name in md:
+                # NB: if name in md is not used as it would be VERY
+                # inefficient (doubling the queries, perhaps).
+                try:
                     result = md[name]
+                except KeyError:
+                    pass
+                else:
                     result_def = True
+                if result_def:
                     break
         return result, result_def
 
