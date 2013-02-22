@@ -124,6 +124,9 @@ def metadata_from_cache(query):
         :class:`object`.
 
     """
+    # Caching images causes a weird unpickling bug.
+    if query.strand == 'image':
+        raise HookFailureError('Cannot cache images.')
     if query.key.cache_duration == 0:
         raise HookFailureError('Not caching this metadata.')
 
