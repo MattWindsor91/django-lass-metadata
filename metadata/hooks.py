@@ -316,10 +316,10 @@ def handle_set(metadata, allow_multiple, query_type):
     """
     if query_type == VALUE:
         if allow_multiple:
-            result = set(metadata)
+            result = {x.value for x in metadata}
         else:
             try:
-                result = metadata.latest()
+                result = metadata.latest().value
             except metadata.model.DoesNotExist:
                 raise HookFailureError("No match.")
     elif query_type == COUNT:
@@ -339,6 +339,4 @@ def get_active_metadata(strand_set, key, date):
     key that was active at the given date.
 
     """
-    return strand_set.at(date).filter(key__pk=key.id).values_list(
-        'value', flat=True
-    )
+    return strand_set.at(date).filter(key__pk=key.id).only('value')
