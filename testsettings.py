@@ -1,5 +1,7 @@
 USE_TZ = True
 
+SECRET_KEY = 'notSECRET'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
