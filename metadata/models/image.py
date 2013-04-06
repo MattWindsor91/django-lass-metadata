@@ -22,9 +22,10 @@ class ImageMetadata(GenericMetadata):
 
     value = models.ImageField(
         upload_to=(lambda instance, filename:
-                   'image_meta/{0}/{1}'.format(
+                   'image_meta/{}/{}'.format(
                        instance.__class__.__name__,
                        filename)),
+        db_column='metadata_value',
         help_text='The image associated with this metadata entry.')
 
     class Meta(GenericMetadata.Meta):
